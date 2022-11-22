@@ -1,0 +1,10 @@
+[Unit]
+Description=PV modbus collector
+After=network.target
+
+[Service]
+ExecStart=/srv/alpha-client/bin/python3 /srv/alpha-client/connector.py
+
+[Install]
+WantedBy=multi-user.target
+
