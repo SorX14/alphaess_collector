@@ -5,3 +5,6 @@ user =
 pass =
 database =
 table =
+
+[config]
+interval = 10

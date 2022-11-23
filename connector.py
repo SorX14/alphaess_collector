@@ -38,16 +38,17 @@ async def main(config):
             frequency = await reader.get_value("frequency_grid")
 
             try:
+                mysql_config = config['mysql']
                 with connect(
-                    host=config['host'],
-                    user=config['user'],
-                    password=config['pass'],
-                    database=config['database'],
-                    port=config['port']
+                    host=mysql_config['host'],
+                    user=mysql_config['user'],
+                    password=mysql_config['pass'],
+                    database=mysql_config['database'],
+                    port=mysql_config['port']
                 ) as connection:
                     logger.info(f"{current_time}: PV: {pv}W Grid: {grid}W Load: {load}W {voltage}V @ {frequency}Hz")
 
-                    qry = f"INSERT INTO {config['table']} (`time`, `pv`, `grid`, `load`, `voltage`, `frequency`) VALUES (%s, %s, %s, %s, %s, %s);"
+                    qry = f"INSERT INTO {mysql_config['table']} (`time`, `pv`, `grid`, `load`, `voltage`, `frequency`) VALUES (%s, %s, %s, %s, %s, %s);"
                     data = (current_time, pv, grid, load, voltage, frequency)
 
                     with connection.cursor() as cursor:
@@ -57,8 +58,8 @@ async def main(config):
                 logger.error('MySQL error :(')
                 logger.error(e)
 
-            # Try to get a reading every 1 second
-            await asyncio.sleep(1 - (time.time() - start_time)) 
+            # Try to get a reading every x seconds
+            await asyncio.sleep(float(config['config']['interval']) - (time.time() - start_time)) 
         except IOError as e:
             # If something goes wrong, we'll give it a few seconds before retrying
             logger.error('IOError :(')
@@ -74,7 +75,9 @@ if __name__ == "__main__":
         config = configparser.ConfigParser()
         config.read(path_config_file)
 
-        loop = asyncio.run(main(config['mysql']))
+        print(config.sections)
+
+        loop = asyncio.run(main(config))
     except (ValueError, Exception) as e:
         logger.debug(str(e))
         logger.debug(traceback.format_exc())
